@@ -6,7 +6,7 @@ const argv = yargs.string("action").number("id").string("name").string("email").
 async function invokeAction({ action, id, name, email, phone }) {
   switch (action) {
     case "list":
-      console.table(await contacts.listContacts());
+      console.log(await contacts.listContacts());
       break;
 
     case "get":
