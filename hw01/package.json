@@ -1,0 +1,26 @@
+{
+  "name": "hw01",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "keywords": [],
+  "author": "an dyk bui",
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^2.0.4"
+  },
+  "nodemonConfig": {
+    "ignore": [
+      "test/*",
+      "db/*"
+    ]
+  },
+  "dependencies": {
+    "yargs": "^15.3.1"
+  }
+}
