@@ -93,11 +93,8 @@ class Analytics {
     const list = await this.getPropertiesList();
     const getDataOfItem = async (item) => {
       return {
-        property: item.websiteUrl,
-        today: {
-          total: await this.getDailyData("today", "today"),
-          organic: await this.getDailyData("today", "today", true),
-        },
+        total: await this.getDailyData("today", "today"),
+        organic: await this.getDailyData("today", "today", true),
       };
     };
     return await Promise.all(list.map((item) => getDataOfItem(item)));

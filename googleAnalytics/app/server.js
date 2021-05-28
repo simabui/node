@@ -41,9 +41,13 @@ class Server {
 
     try {
       const data = await myProject.getAnalyticsData();
+
+      data.sum = _sumAggregateData(data);
+
       res.status(200).json(data);
     } catch (e) {
-      res.status(500).send(e);
+      console.log(e);
+      res.status(500).send();
     }
   }
 
@@ -55,17 +59,23 @@ class Server {
     });
   }
 }
-
-async function getPortfolioData() {
-  const scopes = ["https://www.googleapis.com/auth/analytics", "https://www.googleapis.com/auth/analytics.edit"];
-  const client_email = process.env.CLIENT_EMAIL;
-  const accountId = process.env.ACCOUNT_ID;
-  const viewId = process.env.VIEW_ID;
-  const private_key = process.env.PRIVATE_KEY.replace(/\\n/g, "\n");
-
-  const myProject = new Analytics(scopes, client_email, accountId, viewId, private_key);
-  const data = await myProject.getAnalyticsData();
-  console.log(data);
+function _sumAggregateData(data) {
+  const acc = {
+    yesterday: { total: 0, organic: 0 },
+    monthly: { total: 0, organic: 0 },
+  };
+  let sum = data.aggregate.reduce((acc, current) => {
+    return {
+      yesterday: {
+        total: parseInt(current.yesterday.total) + parseInt(acc.yesterday.total),
+        organic: parseInt(current.yesterday.organic) + parseInt(acc.yesterday.organic),
+      },
+      monthly: {
+        total: parseInt(current.monthly.total) + parseInt(acc.monthly.total),
+        organic: parseInt(current.monthly.organic) + parseInt(acc.monthly.organic),
+      },
+    };
+  }, acc);
+  return sum;
 }
-
 module.exports = new Server();
