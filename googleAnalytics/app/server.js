@@ -1,6 +1,9 @@
 const express = require("express");
 const cors = require("cors");
+const Validator = require("./validation");
 const Analytics = require("./analytics");
+const Airtable = require("./airtable");
+
 require("dotenv").config();
 
 class Server {
@@ -28,6 +31,7 @@ class Server {
 
   initRoutes() {
     this.server.get("/", this.getPortfolioData);
+    this.server.post("/form", Validator.validateNewsLetterForm(), this.getFormData);
   }
 
   async getPortfolioData(req, res) {
@@ -48,6 +52,20 @@ class Server {
     } catch (e) {
       console.log(e);
       res.status(500).send();
+    }
+  }
+
+  async getFormData(req, res) {
+    const name = req.body.name;
+    const email = req.body.email;
+    const date = new Date().toISOString();
+
+    try {
+      await Airtable.create({ name, email, date });
+
+      res.status(200).send();
+    } catch (e) {
+      res.status(500).send(e.message);
     }
   }
 
