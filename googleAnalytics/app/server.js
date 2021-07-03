@@ -1,8 +1,12 @@
 const express = require("express");
 const cors = require("cors");
+const fs = require("fs");
+const cookieParser = require("cookie-parser");
+const { createJWT, verifyJWT } = require("./auth");
 const Validator = require("./validation");
 const Analytics = require("./analytics");
 const Airtable = require("./airtable");
+const initializedFile = "./data/initialized.json";
 
 require("dotenv").config();
 
@@ -27,10 +31,13 @@ class Server {
     this.server.use(express.json());
     this.server.use(express.static("public"));
     this.server.use(cors());
+    this.server.use(cookieParser());
   }
 
   initRoutes() {
     this.server.get("/", this.getPortfolioData);
+    this.server.get("/admin", this.getAuthorization, this.getEmails);
+    this.server.get("/admin/reset", this.resetAuthorization);
     this.server.post("/form", Validator.validateNewsLetterForm(), this.getFormData);
   }
 
@@ -69,6 +76,69 @@ class Server {
     }
   }
 
+  async getAuthorization(req, res, next) {
+    if (fs.existsSync(initializedFile)) {
+      try {
+        await verifyJWT(req.cookies.token);
+        next();
+      } catch (e) {
+        res.status(500).send(e);
+      }
+    } else {
+      const token = createJWT({
+        maxAge: 60 * 24 * 365,
+      });
+
+      fs.closeSync(fs.openSync(initializedFile, "w"));
+
+      res.cookie("token", token, { httpOnly: true, secure: true });
+      next();
+    }
+  }
+
+  async resetAuthorization(req, res) {
+    try {
+      if (fs.existsSync(initializedFile)) {
+        try {
+          await verifyJWT(req.cookies.token);
+          fs.unlink(initializedFile, (err) => {
+            if (err) {
+              console.error("Error removing the file");
+              res.status(500).end();
+              return;
+            }
+            res.send("Session ended");
+          });
+        } catch (e) {
+          res.status(400).send(e);
+        }
+      } else {
+        res.status(500).send("No session started.");
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  async getEmails(req, res) {
+    try {
+      const emailsRaw = await Airtable.getAirtableRecords();
+
+      const emails = emailsRaw.map((record) => {
+        console.log(record);
+
+        return {
+          email: record.get("Email"),
+          name: record.get("Name"),
+          date: record.get("Date"),
+        };
+      });
+      res.status(200).send(emails);
+    } catch (e) {
+      res.status(500).send(e);
+    }
+  }
+
   startListening() {
     const PORT = process.env.PORT;
 
@@ -77,6 +147,7 @@ class Server {
     });
   }
 }
+
 function _sumAggregateData(data) {
   const acc = {
     yesterday: { total: 0, organic: 0 },
