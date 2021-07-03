@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const fs = require("fs");
 const cookieParser = require("cookie-parser");
+const ta = require("time-ago");
 const { createJWT, verifyJWT } = require("./auth");
 const Validator = require("./validation");
 const Analytics = require("./analytics");
@@ -30,7 +31,7 @@ class Server {
   initMiddlewares() {
     this.server.use(express.json());
     this.server.use(express.static("public"));
-    this.server.use(cors());
+    this.server.use(cors({ credentials: true, origin: "http://localhost:8080" }));
     this.server.use(cookieParser());
   }
 
@@ -125,12 +126,10 @@ class Server {
       const emailsRaw = await Airtable.getAirtableRecords();
 
       const emails = emailsRaw.map((record) => {
-        console.log(record);
-
         return {
           email: record.get("Email"),
           name: record.get("Name"),
-          date: record.get("Date"),
+          date: ta.ago(record.get("Date")),
         };
       });
       res.status(200).send(emails);
