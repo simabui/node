@@ -7,8 +7,8 @@ const { createJWT, verifyJWT } = require("./auth");
 const Validator = require("./validation");
 const Analytics = require("./analytics");
 const Airtable = require("./airtable");
+const mail = require("./mail");
 const initializedFile = "./data/initialized.json";
-
 require("dotenv").config();
 
 class Server {
@@ -40,6 +40,7 @@ class Server {
     this.server.get("/admin", this.getAuthorization, this.getEmails);
     this.server.get("/admin/reset", this.resetAuthorization);
     this.server.post("/form", Validator.validateNewsLetterForm(), this.getFormData);
+    this.server.post("/send", this.sendMail);
   }
 
   async getPortfolioData(req, res) {
@@ -101,7 +102,7 @@ class Server {
     try {
       if (fs.existsSync(initializedFile)) {
         try {
-          await verifyJWT(req.cookies.token);
+          // await verifyJWT(req.cookies.token);
           fs.unlink(initializedFile, (err) => {
             if (err) {
               console.error("Error removing the file");
@@ -136,6 +137,13 @@ class Server {
     } catch (e) {
       res.status(500).send(e);
     }
+  }
+
+  async sendMail(req, res) {
+    const { content } = req.body;
+
+    await mail.sendEmail();
+    res.status(200).send();
   }
 
   startListening() {
