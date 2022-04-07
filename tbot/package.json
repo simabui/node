@@ -13,7 +13,7 @@
     "nodemon": "^2.0.12"
   },
   "dependencies": {
-    "axios": "^0.21.1",
+    "axios": "^0.21.2",
     "base64url": "^3.0.1",
     "cors": "^2.8.5",
     "dotenv": "^10.0.0",
